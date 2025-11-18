@@ -11,4 +11,3 @@ A semantic, accessible, validated smart form including custom validation, autosa
 - Error summary with focus management
 - Honeypot bot detection
 
-## File Structure
