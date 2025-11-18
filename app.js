@@ -1,91 +1,233 @@
-const form = document.getElementById("smart-form");
-const errorSummary = document.getElementById("error-summary");
+const form = document.getElementById('signupForm');
 
-// Restore draft on load
-window.addEventListener("DOMContentLoaded", () => {
-    const draft = JSON.parse(localStorage.getItem("smartFormDraft"));
-    if (!draft) return;
+const fields = {
+    name: document.getElementById('name'),
+    email: document.getElementById('email'),
+    password: document.getElementById('password'),
+    phone: document.getElementById('phone'),
+    companyToggle: document.getElementById('companyToggle'),
+    company: document.getElementById('company'),
+    hp: document.getElementById('hp')
+};
 
-    Object.entries(draft).forEach(([key, value]) => {
-        const field = document.querySelector(`[name="${key}"]`);
-        if (field) field.value = value;
-    });
+const errorEls = {
+    name: document.getElementById('nameError'),
+    email: document.getElementById('emailError'),
+    password: document.getElementById('passwordError'),
+    phone: document.getElementById('phoneError'),
+    company: document.getElementById('companyError')
+};
 
-    console.log("Restored Draft");
-});
+const companySection = document.getElementById('companyFields');
+const summary = document.getElementById('error-summary');
+const clearBtn = document.getElementById('clearBtn');
 
-// Autosave on input
-form.addEventListener("input", () => {
-    const data = Object.fromEntries(new FormData(form).entries());
-    localStorage.setItem("smartFormDraft", JSON.stringify(data));
-    console.log("Saved Draft");
-});
+fields.companyToggle.addEventListener('change', () => {
+    companySection.hidden = !fields.companyToggle.checked;
 
-// Validation function
-function validateField(field) {
-    const errorEl = document.getElementById(`${field.id}-error`);
-
-    if (field.validity.valid) {
-        errorEl.textContent = "";
-        field.setAttribute("aria-invalid", "false");
-        return null;
-    }
-
-    field.setAttribute("aria-invalid", "true");
-
-    if (field.validity.valueMissing) {
-        errorEl.textContent = "This field is required.";
-    } else if (field.validity.typeMismatch) {
-        errorEl.textContent = "Enter a valid value.";
+    if (!companySection.hidden) {
+        fields.company.setAttribute('required', '');
     } else {
-        errorEl.textContent = "Invalid input.";
+        fields.company.removeAttribute('required');
+        errorEls.company.textContent = '';
     }
+});
 
-    return { field, message: errorEl.textContent };
+function debounce(fn, wait = 250) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), wait);
+    };
 }
 
-// Submit
-form.addEventListener("submit", (e) => {
+function validateName() {
+    const el = fields.name;
+    el.setCustomValidity('');
+
+    if (el.validity.valueMissing) {
+        el.setCustomValidity('Name is required.');
+    } else if (el.value.trim().length < 2) {
+        el.setCustomValidity('Name must be at least 2 characters.');
+    }
+
+    errorEls.name.textContent = el.validationMessage;
+    el.setAttribute('aria-invalid', String(!el.checkValidity()));
+    return el.checkValidity();
+}
+
+function validateEmail() {
+    const el = fields.email;
+    el.setCustomValidity('');
+
+    if (el.validity.valueMissing) {
+        el.setCustomValidity('Email is required.');
+    } else if (el.validity.typeMismatch) {
+        el.setCustomValidity('Enter a valid email address.');
+    }
+
+    errorEls.email.textContent = el.validationMessage;
+    el.setAttribute('aria-invalid', String(!el.checkValidity()));
+    return el.checkValidity();
+}
+
+function validatePassword() {
+    const el = fields.password;
+    el.setCustomValidity('');
+
+    if (el.validity.valueMissing) {
+        el.setCustomValidity('Password is required.');
+    } else if (el.validity.tooShort) {
+        el.setCustomValidity('Password must be at least 8 characters.');
+    } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/.test(el.value)) {
+        el.setCustomValidity('Add upper case, lower case, and a number.');
+    }
+
+    errorEls.password.textContent = el.validationMessage;
+    el.setAttribute('aria-invalid', String(!el.checkValidity()));
+    return el.checkValidity();
+}
+
+function validatePhone() {
+    const el = fields.phone;
+    el.setCustomValidity('');
+
+    if (el.value && !el.checkValidity()) {
+        el.setCustomValidity('Phone format example: +358 40 123 4567');
+    }
+
+    errorEls.phone.textContent = el.validationMessage;
+    el.setAttribute('aria-invalid', String(!el.checkValidity()));
+    return el.checkValidity();
+}
+
+function validateCompany() {
+    if (companySection.hidden) return true;
+
+    const el = fields.company;
+    el.setCustomValidity('');
+
+    if (el.validity.valueMissing) {
+        el.setCustomValidity('Company name is required when registering as a company.');
+    }
+
+    errorEls.company.textContent = el.validationMessage;
+    el.setAttribute('aria-invalid', String(!el.checkValidity()));
+    return el.checkValidity();
+}
+
+function buildSummary() {
+    const problems = [];
+
+    if (!validateName()) problems.push('Name: ' + fields.name.validationMessage);
+    if (!validateEmail()) problems.push('Email: ' + fields.email.validationMessage);
+    if (!validatePassword()) problems.push('Password: ' + fields.password.validationMessage);
+    if (!validatePhone()) problems.push('Phone: ' + fields.phone.validationMessage);
+    if (!companySection.hidden && !validateCompany()) problems.push('Company: ' + fields.company.validationMessage);
+
+    if (problems.length) {
+        summary.classList.remove('visually-hidden');
+        summary.innerHTML = 'Please fix the following: ' + problems.join('<br>');
+    } else {
+        summary.classList.add('visually-hidden');
+        summary.innerHTML = '';
+    }
+}
+
+['input', 'change'].forEach(evt =>
+    form.addEventListener(evt, debounce(saveDraft, 300))
+);
+
+function saveDraft() {
+    const data = {
+        name: fields.name.value,
+        email: fields.email.value,
+        phone: fields.phone.value,
+        password: fields.password.value,
+        companyToggle: fields.companyToggle.checked,
+        company: fields.company.value
+    };
+    localStorage.setItem('ws5-signup', JSON.stringify(data));
+}
+
+function restoreDraft() {
+    const raw = localStorage.getItem('ws5-signup');
+    if (!raw) return;
+
+    const data = JSON.parse(raw);
+
+    fields.name.value = data.name || '';
+    fields.email.value = data.email || '';
+    fields.phone.value = data.phone || '';
+    fields.password.value = data.password || '';
+    fields.companyToggle.checked = Boolean(data.companyToggle);
+    companySection.hidden = !fields.companyToggle.checked;
+    fields.company.value = data.company || '';
+}
+
+restoreDraft();
+
+clearBtn.addEventListener('click', () => {
+    form.reset();
+    localStorage.removeItem('ws5-signup');
+    Object.values(errorEls).forEach(e => e.textContent = '');
+    companySection.hidden = true;
+    buildSummary();
+});
+
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const errors = [];
-    const fields = [...form.querySelectorAll("input, textarea")];
+    const isValid =
+        validateName() &&
+        validateEmail() &&
+        validatePassword() &&
+        validatePhone() &&
+        validateCompany();
 
-    fields.forEach(f => {
-        const result = validateField(f);
-        if (result) errors.push(result);
-    });
+    buildSummary();
 
-    if (errors.length) {
-        errorSummary.style.display = "block";
-        errorSummary.innerHTML = `
-            <strong>Please fix the following errors:</strong>
-            <ul>${errors.map(e => `<li>${e.message}</li>`).join("")}</ul>
-        `;
-
-        errors[0].field.focus();
+    const firstInvalid = form.querySelector('[aria-invalid="true"]');
+    if (!isValid && firstInvalid) {
+        firstInvalid.focus();
         return;
     }
 
-    errorSummary.style.display = "none";
-    localStorage.removeItem("smartFormDraft");
-
-    alert("Form submitted successfully (mock submission).");
-});
-
-// Phone normalisation on blur
-document.getElementById("phone").addEventListener("blur", (e) => {
-    let val = e.target.value;
-
-    // Remove all non-numeric characters
-    val = val.replace(/\D/g, "");
-
-    // Convert Finnish numbers: 0401234567 → +358401234567
-    if (val.startsWith("0")) {
-        val = "+358" + val.substring(1);
-    } else if (!val.startsWith("+")) {
-        val = "+" + val;
+    if (fields.hp.value) {
+        alert('Submission blocked due to bot detection.');
+        return;
     }
 
-    e.target.value = val;
+    const payload = {
+        name: fields.name.value,
+        email: fields.email.value,
+        phone: fields.phone.value,
+        company: fields.companyToggle.checked ? fields.company.value : '',
+        time: new Date().toISOString()
+    };
+
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        alert('Submitted successfully. Demo ID: ' + data.id);
+    } catch {
+        alert('Network error occurred. Please try again.');
+    }
+});
+
+fields.phone.addEventListener('blur', () => {
+    const digits = fields.phone.value.replace(/[^0-9+]/g, '');
+
+    if (digits.startsWith('0')) {
+        fields.phone.value = '+358' + digits.slice(1);
+    } else if (digits.startsWith('+')) {
+        fields.phone.value = digits;
+    } else {
+        fields.phone.value = '+358' + digits;
+    }
 });
