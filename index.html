@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WS5 Smart Form</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <main>
+        <h1>Smart Registration Form</h1>
+
+        <div id="error-summary" class="error-summary" aria-live="assertive"></div>
+
+        <form id="smart-form" novalidate>
+            <fieldset>
+                <legend>Personal Information</legend>
+
+                <label for="name">Full Name</label>
+                <input id="name" name="name" type="text" required aria-describedby="name-error" />
+                <p id="name-error" class="error-message"></p>
+
+                <label for="email">Email Address</label>
+                <input id="email" name="email" type="email" required aria-describedby="email-error" />
+                <p id="email-error" class="error-message"></p>
+
+                <label for="phone">Phone Number</label>
+                <input id="phone" name="phone" type="tel" required aria-describedby="phone-error" />
+                <p id="phone-error" class="error-message"></p>
+            </fieldset>
+
+            <fieldset>
+                <legend>Message</legend>
+
+                <label for="message">Your Message</label>
+                <textarea id="message" name="message" required aria-describedby="message-error"></textarea>
+                <p id="message-error" class="error-message"></p>
+            </fieldset>
+
+            <button type="submit">Submit</button>
+        </form>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

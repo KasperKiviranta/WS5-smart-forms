@@ -1,0 +1,68 @@
+body {
+    font-family: sans-serif;
+    background: #111;
+    color: #eee;
+    padding: 2rem;
+}
+
+main {
+    max-width: 600px;
+    margin: auto;
+}
+
+fieldset {
+    border: 1px solid #444;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+}
+
+label {
+    display: block;
+    margin-top: 1rem;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.6rem;
+    margin-top: 0.3rem;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #eee;
+}
+
+input:invalid,
+textarea:invalid {
+    border-color: #ff4d4d;
+}
+
+input:valid,
+textarea:valid {
+    border-color: #4dff8c;
+}
+
+.error-summary {
+    background: #330000;
+    color: #ffdddd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    display: none;
+}
+
+.error-message {
+    color: #ff8080;
+    font-size: 0.9rem;
+    height: 1rem;
+}
+
+button {
+    margin-top: 1rem;
+    padding: 0.8rem 1.2rem;
+    background: #0066ff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
